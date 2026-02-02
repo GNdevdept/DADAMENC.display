@@ -7,10 +7,14 @@
 *{font-family:Pretendard,'Noto Sans KR',sans-serif}
 body{background:#f4f6f8;padding:30px}
 .section{background:#fff;border-radius:14px;padding:22px;margin-bottom:28px}
-input,select,textarea,button{padding:10px;margin:6px;width:100%}
+input,select,textarea,button{padding:10px;margin:6px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.item{background:#eef1f4;border-radius:10px;padding:10px;margin-top:8px;display:flex;justify-content:space-between}
-.fixed-save{position:fixed;right:30px;bottom:30px;padding:16px 24px;font-size:16px}
+.item{background:#eef1f4;border-radius:10px;padding:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:center}
+.dot{width:18px;height:18px;border-radius:50%;margin-right:10px}
+.green{background:#2ecc71}
+.yellow{background:#f1c40f}
+.red{background:#e74c3c}
+.actions{position:fixed;bottom:30px;right:30px;display:flex;gap:12px}
 </style>
 </head>
 <body>
@@ -36,41 +40,25 @@ input,select,textarea,button{padding:10px;margin:6px;width:100%}
 </div>
 
 <div class="section">
-<h2>업무 일정</h2>
-<input type="date" id="date">
-<input id="title" placeholder="일정 제목">
-<textarea id="detail" placeholder="상세 내용"></textarea>
-<button onclick="addSchedule()">추가</button>
-<div id="scheduleTemp"></div>
-</div>
-
-<div class="section">
 <h2>사내 공지사항</h2>
 <textarea id="noticeText" rows="4"></textarea>
 </div>
 
-<button class="fixed-save" onclick="saveAll()">💾 최종 저장</button>
-<button onclick="location.href='index.html'">사이니지로 돌아가기</button>
+<div class="actions">
+  <button onclick="location.href='index.html'">사이니지로</button>
+  <button onclick="saveAll()">💾 저장</button>
+</div>
 
 <script>
-let travel=[],schedule=[];
+let travel=[];
 function color(s){return s==="출장"?"green":s==="외근"?"yellow":"red";}
 
 function addTravel(){
   travel.push({
-    name:document.getElementById("nameInput").value,
-    department:document.getElementById("department").value,
-    task:document.getElementById("task").value,
-    statusColor:color(document.getElementById("status").value)
-  });
-  render();
-}
-
-function addSchedule(){
-  schedule.push({
-    date:document.getElementById("date").value,
-    title:document.getElementById("title").value,
-    detail:document.getElementById("detail").value
+    name:nameInput.value,
+    department:department.value,
+    task:task.value,
+    color:color(status.value)
   });
   render();
 }
@@ -78,24 +66,24 @@ function addSchedule(){
 function render(){
   travelTemp.innerHTML="";
   travel.forEach((t,i)=>{
-    travelTemp.innerHTML+=`<div class="item">${t.name} (${t.department}) - ${t.task}<button onclick="travel.splice(${i},1);render()">삭제</button></div>`;
-  });
-  scheduleTemp.innerHTML="";
-  schedule.forEach((s,i)=>{
-    scheduleTemp.innerHTML+=`<div class="item">${s.date} - ${s.title}<button onclick="schedule.splice(${i},1);render()">삭제</button></div>`;
+    travelTemp.innerHTML+=`
+    <div class="item">
+      <div style="display:flex;align-items:center">
+        <span class="dot ${t.color}"></span>${t.name} (${t.department}) - ${t.task}
+      </div>
+      <button onclick="travel.splice(${i},1);render()">삭제</button>
+    </div>`;
   });
 }
 
 function saveAll(){
   localStorage.setItem("travel",JSON.stringify(travel));
-  localStorage.setItem("schedule",JSON.stringify(schedule));
-  localStorage.setItem("notice",document.getElementById("noticeText").value);
+  localStorage.setItem("notice",noticeText.value);
   alert("저장 완료");
 }
 
 (function load(){
   travel=JSON.parse(localStorage.getItem("travel")||"[]");
-  schedule=JSON.parse(localStorage.getItem("schedule")||"[]");
   noticeText.value=localStorage.getItem("notice")||"";
   render();
 })();

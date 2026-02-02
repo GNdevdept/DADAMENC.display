@@ -8,19 +8,47 @@
 *{box-sizing:border-box;font-family:Pretendard,'Noto Sans KR',sans-serif}
 html,body{margin:0;width:100%;height:100%;background:#0b1626;color:#fff}
 .wrapper{display:grid;grid-template-columns:3fr 2fr;height:100%;padding:48px;gap:40px}
+
 .brand{font-size:42px;font-weight:800}
-.time{font-size:96px;font-weight:700;margin-top:32px}
+.time{font-size:96px;font-weight:700;margin-top:28px}
 .date{font-size:30px;opacity:.85}
-.weather{margin-top:20px;display:flex;align-items:center}
-.weather img{width:48px;height:48px;margin-right:12px}
+
+.weather-block{margin-top:24px}
+.weather-row{display:flex;align-items:center;margin-bottom:14px}
+.weather-row img{width:46px;height:46px;margin-right:12px}
+.weather-main{font-size:22px}
+.weather-loc strong{font-size:1.8em;font-weight:800}
+.weather-loc{opacity:.9}
+
 .notice{margin-top:24px;font-size:22px;line-height:1.4}
+
 .panel{background:#13263f;border-radius:18px;padding:26px}
 .panel h2{margin:0 0 16px;font-size:28px;border-bottom:1px solid rgba(255,255,255,.15)}
-.item{font-size:22px;margin-bottom:12px;display:flex;align-items:center}
-.dot{width:12px;height:12px;border-radius:50%;margin-right:10px}
-.green{background:#2ecc71}
-.yellow{background:#f1c40f}
-.red{background:#e74c3c}
+
+.person{display:flex;align-items:flex-start;margin-bottom:14px}
+.dot{
+  width:18px;height:18px;border-radius:50%;margin-right:12px;flex-shrink:0;
+  background:linear-gradient(145deg,rgba(255,255,255,.6),rgba(0,0,0,.2));
+  position:relative;overflow:hidden
+}
+.dot::after{
+  content:"";position:absolute;inset:-50%;
+  background:linear-gradient(120deg,transparent 45%,rgba(255,255,255,.8) 50%,transparent 55%);
+  animation:shine 4s infinite linear
+}
+.green{background-color:#2ecc71}
+.yellow{background-color:#f1c40f}
+.red{background-color:#e74c3c}
+
+.name{font-size:1.5em;font-weight:800}
+.sub{opacity:.8;margin-left:30px}
+
+@keyframes shine{
+  from{transform:translateX(-100%) rotate(25deg)}
+  to{transform:translateX(100%) rotate(25deg)}
+}
+
+/* admin modal */
 #adminModal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center}
 #adminBox{background:#13263f;padding:28px;border-radius:14px;width:340px;position:relative}
 #adminBox input,#adminBox button{width:100%;padding:12px;margin-top:10px;font-size:16px}
@@ -34,10 +62,24 @@ html,body{margin:0;width:100%;height:100%;background:#0b1626;color:#fff}
     <div class="brand">DADAM ENC</div>
     <div class="time" id="time"></div>
     <div class="date" id="date"></div>
-    <div class="weather">
-      <img id="weatherIcon">
-      <div id="weatherText"></div>
+
+    <div class="weather-block">
+      <div class="weather-row">
+        <img id="iconHQ">
+        <div>
+          <div class="weather-main" id="weatherHQ"></div>
+          <div class="weather-loc"><strong>다담이엔씨 본사</strong> (마곡 보타닉게이트 지식산업센터)</div>
+        </div>
+      </div>
+      <div class="weather-row">
+        <img id="iconFactory">
+        <div>
+          <div class="weather-main" id="weatherFactory"></div>
+          <div class="weather-loc"><strong>다담이엔씨 공장</strong> (충청남도 당진시 순성면 731-19)</div>
+        </div>
+      </div>
     </div>
+
     <div class="notice" id="notice"></div>
   </div>
 
@@ -45,10 +87,6 @@ html,body{margin:0;width:100%;height:100%;background:#0b1626;color:#fff}
     <div class="panel">
       <h2>출장 · 외근 현황</h2>
       <div id="travelList"></div>
-    </div>
-    <div class="panel" style="margin-top:24px">
-      <h2>업무 일정</h2>
-      <div id="scheduleList"></div>
     </div>
   </div>
 </div>
@@ -70,32 +108,30 @@ function updateTime(){
 }
 setInterval(updateTime,1000);updateTime();
 
-async function loadWeather(){
-  try{
-    const r=await fetch("https://api.openweathermap.org/data/2.5/weather?lat=37.56015&lon=126.82695&units=metric&lang=kr&appid=a33a7b44981e0a4738c0a7a023bbc7b9");
-    const d=await r.json();
-    weatherText.innerText=d.weather[0].description+" · "+Math.round(d.main.temp)+"℃ (마곡 보타닉게이트 지식산업센터)";
-    weatherIcon.src="https://openweathermap.org/img/wn/"+d.weather[0].icon+"@2x.png";
-  }catch{weatherText.innerText="날씨 정보 없음";}
+async function loadWeather(lat,lon,iconEl,textEl){
+  const r=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=kr&appid=a33a7b44981e0a4738c0a7a023bbc7b9`);
+  const d=await r.json();
+  textEl.innerText=`${d.weather[0].description} · ${Math.round(d.main.temp)}℃`;
+  iconEl.src=`https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png`;
 }
-loadWeather();setInterval(loadWeather,600000);
+
+loadWeather(37.56015,126.82695,iconHQ,weatherHQ);
+loadWeather(36.864687409697794,126.70225194391269,iconFactory,weatherFactory);
 
 function render(){
   const travel=JSON.parse(localStorage.getItem("travel")||"[]");
-  const schedule=JSON.parse(localStorage.getItem("schedule")||"[]");
-  const noticeData=localStorage.getItem("notice")||"";
-
+  notice.innerText=localStorage.getItem("notice")||"";
   travelList.innerHTML="";
   travel.forEach(p=>{
-    travelList.innerHTML+=`<div class="item"><span class="dot ${p.statusColor}"></span>${p.name} (${p.department}) - ${p.task}</div>`;
+    travelList.innerHTML+=`
+    <div class="person">
+      <span class="dot ${p.color}"></span>
+      <div>
+        <div class="name">${p.name}</div>
+        <div class="sub">${p.department} · ${p.task}</div>
+      </div>
+    </div>`;
   });
-
-  scheduleList.innerHTML="";
-  schedule.forEach(s=>{
-    scheduleList.innerHTML+=`<div class="item">${s.date} - ${s.title}</div>`;
-  });
-
-  notice.innerText=noticeData;
 }
 setInterval(render,500);render();
 
@@ -106,7 +142,7 @@ document.addEventListener("keydown",e=>{
   if(seq===target){adminModal.style.display="flex";seq="";}
 });
 function closeAdmin(){adminModal.style.display="none";adminPw.value="";}
-function login(){ if(adminPw.value==="5973") location.href="admin.html"; else alert("비밀번호 오류"); }
+function login(){ if(adminPw.value==="2356") location.href="admin.html"; else alert("비밀번호 오류"); }
 </script>
 </body>
 </html>
