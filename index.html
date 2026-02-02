@@ -2,93 +2,95 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>사내 사이니지 접속</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사내 디지털 사이니지</title>
+<meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
 <style>
-body{
-  margin:0;
-  width:100vw;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:#0e1a2b;
-  color:#fff;
-  font-family:Pretendard,'Noto Sans KR',sans-serif;
-}
-.card{
-  background:#162a45;
-  padding:40px;
-  border-radius:20px;
-  width:360px;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-  text-align:center;
-}
-h1{
-  margin-top:0;
-  font-size:28px;
-}
-input{
-  width:100%;
-  padding:12px;
-  font-size:16px;
-  border-radius:8px;
-  border:none;
-  margin-top:10px;
-}
-button{
-  width:100%;
-  padding:14px;
-  font-size:16px;
-  border:none;
-  border-radius:10px;
-  margin-top:14px;
-  cursor:pointer;
-}
-.admin{
-  background:#3ddc97;
-  color:#000;
-}
-.player{
-  background:#2f80ed;
-  color:#fff;
-}
-.hint{
-  font-size:13px;
-  opacity:.7;
-  margin-top:10px;
-}
+*{box-sizing:border-box;font-family:Pretendard,'Noto Sans KR',sans-serif}
+html,body{margin:0;width:100%;height:100%;background:#0e1a2b;color:#fff}
+.wrapper{display:grid;grid-template-columns:3fr 2fr;height:100%;padding:40px;gap:32px}
+.brand{font-size:48px;font-weight:800}
+.time{font-size:96px;font-weight:700;margin-top:40px}
+.date{font-size:32px;opacity:.85}
+.panel{background:#162a45;border-radius:20px;padding:28px}
+.panel h2{margin:0 0 20px;font-size:32px;border-bottom:2px solid rgba(255,255,255,.15)}
+.status-item{display:flex;align-items:center;margin-bottom:16px;font-size:26px}
+.dot{position:relative;width:14px;height:14px;border-radius:50%;margin-right:12px;overflow:hidden;
+box-shadow:inset 0 1px 2px rgba(255,255,255,.6),inset 0 -1px 2px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.35)}
+.dot::after{content:"";position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,.45) 50%,transparent 60%);
+animation:shine 6s infinite linear}
+.green{background:radial-gradient(circle at 30% 30%, #7fffd4, #1fa37a)}
+.yellow{background:radial-gradient(circle at 30% 30%, #fff2a8, #d4a100)}
+.red{background:radial-gradient(circle at 30% 30%, #ff9a9a, #c62828)}
+@keyframes shine{from{transform:translate(-100%,-100%) rotate(25deg)}to{transform:translate(100%,100%) rotate(25deg)}}
+
+/* admin modal */
+#adminModal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center}
+#adminBox{background:#162a45;padding:30px;border-radius:18px;width:360px}
+#adminBox input,button{width:100%;padding:12px;margin-top:10px;font-size:16px}
 </style>
 </head>
 <body>
 
-<div class="card">
-  <h1>사내 사이니지</h1>
+<div class="wrapper">
+  <div>
+    <div class="brand">DADAM E&C</div>
+    <div class="time" id="time"></div>
+    <div class="date" id="date"></div>
+  </div>
+  <div>
+    <div class="panel">
+      <h2>출장 · 외근 현황</h2>
+      <div id="travelView"></div>
+    </div>
+    <div class="panel" style="margin-top:24px">
+      <h2>업무 일정</h2>
+      <div id="scheduleView"></div>
+    </div>
+  </div>
+</div>
 
-  <input type="password" id="pw" placeholder="관리자 비밀번호">
-
-  <button class="admin" onclick="goAdmin()">관리자 접속</button>
-  <button class="player" onclick="goPlayer()">플레이어 바로 보기</button>
-
-  <div class="hint">※ TV에서는 플레이어 버튼만 사용하세요</div>
+<div id="adminModal">
+  <div id="adminBox">
+    <h2>관리자 로그인</h2>
+    <input type="password" id="pw" placeholder="비밀번호">
+    <button onclick="login()">확인</button>
+  </div>
 </div>
 
 <script>
-const ADMIN_PASSWORD = "admin5973";
-
-function goAdmin(){
-  const input = document.getElementById("pw").value;
-  if(input === ADMIN_PASSWORD){
-    location.href = "./admin/";
-  }else{
-    alert("비밀번호가 틀렸습니다");
-  }
+/* time */
+function updateTime(){
+  const n=new Date();
+  time.innerText=n.toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour12:false});
+  date.innerText=n.toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'});
 }
+setInterval(updateTime,1000);updateTime();
 
-function goPlayer(){
-  location.href = "./player/";
+/* render */
+function render(){
+  const t=JSON.parse(localStorage.getItem('travel')||'[]');
+  const s=JSON.parse(localStorage.getItem('schedule')||'[]');
+  travelView.innerHTML='';
+  scheduleView.innerHTML='';
+  t.forEach(i=>travelView.innerHTML+=`<div class="status-item"><span class="dot ${i.color}"></span>${i.name} (${i.team}) - ${i.desc}</div>`);
+  s.forEach(i=>scheduleView.innerHTML+=`<div>${i.title} - ${i.desc}</div>`);
+}
+setInterval(render,1000);render();
+
+/* admin trigger: ADMIN */
+let seq="",target="ADMIN";
+document.addEventListener('keydown',e=>{
+  seq+=e.key.toUpperCase();
+  if(!target.startsWith(seq)) seq="";
+  if(seq===target){document.getElementById('adminModal').style.display='flex';seq="";}
+});
+
+function login(){
+  if(pw.value==="5973"){
+    window.location.href="admin.html";
+  }else alert("비밀번호 오류");
 }
 </script>
-
 </body>
 </html>
