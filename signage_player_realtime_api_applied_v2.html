@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+<title>사내 공지 사이니지</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: #0e1a2b;
+  color: #ffffff;
+}
+
+.wrapper {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  height: 100%;
+  padding: 40px;
+  gap: 32px;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.brand {
+  font-size: 48px;
+  font-weight: 800;
+}
+
+.time {
+  font-size: 96px;
+  font-weight: 700;
+  margin-top: 40px;
+}
+
+.date {
+  font-size: 32px;
+  opacity: 0.85;
+}
+
+.weather-box {
+  margin-top: 20px;
+}
+
+.weather {
+  font-size: 28px;
+}
+
+.location {
+  font-size: 20px;
+  opacity: 0.7;
+  margin-top: 6px;
+}
+
+.notice {
+  margin-top: 60px;
+  padding: 32px;
+  background: #162a45;
+  border-radius: 20px;
+  font-size: 32px;
+  line-height: 1.5;
+}
+
+.right {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 24px;
+}
+
+.panel {
+  background: #162a45;
+  border-radius: 20px;
+  padding: 28px;
+}
+
+.panel h2 {
+  margin: 0 0 20px 0;
+  font-size: 32px;
+  border-bottom: 2px solid rgba(255,255,255,0.15);
+  padding-bottom: 12px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 26px;
+}
+
+.dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.green { background: #3ddc97; }
+.yellow { background: #f7c948; }
+.red { background: #ff6b6b; }
+
+.schedule-item {
+  margin-bottom: 18px;
+}
+
+.schedule-title {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.schedule-desc {
+  font-size: 22px;
+  opacity: 0.8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+  <div class="left">
+    <div>
+      <div class="brand">DADAM E&C</div>
+
+      <div class="time" id="time"></div>
+      <div class="date" id="date"></div>
+
+      <div class="weather-box">
+        <div class="weather" id="weather">날씨 불러오는 중...</div>
+        <div class="location">보타닉게이트 지식산업센터</div>
+      </div>
+    </div>
+
+    <div class="notice">
+      ⚠️ 금일 오후부터 기온 하강 예정<br/>
+      현장 이동 시 빙판길 주의 바랍니다.
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="panel">
+      <h2>출장 · 외근 현황</h2>
+      <div class="status-item">
+        <div class="dot green"></div>
+        팽준희 선임 (공사관리) – 오리온 R&D 센터
+      </div>
+      <div class="status-item">
+        <div class="dot yellow"></div>
+        박한수 상무 (경영지원) – 김포 거래처 방문
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>금일 업무 일정</h2>
+      <div class="schedule-item">
+        <div class="schedule-title">오전 주간회의</div>
+        <div class="schedule-desc">문서 분류 코드체계 검토</div>
+      </div>
+      <div class="schedule-item">
+        <div class="schedule-title">내부 검토 회의</div>
+        <div class="schedule-desc">현장 공정표 수정</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateDateTime() {
+  const now = new Date();
+
+  const time = now.toLocaleTimeString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  });
+
+  const date = now.toLocaleDateString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short"
+  });
+
+  document.getElementById("time").innerText = time;
+  document.getElementById("date").innerText = date;
+}
+
+setInterval(updateDateTime, 1000);
+updateDateTime();
+
+const API_KEY = "a33a7b44981e0a4738c0a7a023bbc7b9";
+const LAT = 37.56015;
+const LON = 126.82695;
+
+async function loadWeather() {
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&units=metric&lang=kr&appid=${API_KEY}`
+    );
+    const data = await res.json();
+
+    const temp = Math.round(data.main.temp);
+    const desc = data.weather[0].description;
+    const icon = data.weather[0].icon;
+
+    const emojiMap = {
+      "01": "☀️",
+      "02": "🌤️",
+      "03": "☁️",
+      "04": "☁️",
+      "09": "🌧️",
+      "10": "🌦️",
+      "11": "⛈️",
+      "13": "❄️",
+      "50": "🌫️"
+    };
+
+    const emoji = emojiMap[icon.slice(0, 2)] || "🌡️";
+
+    document.getElementById("weather").innerText =
+      `${emoji} ${desc} · ${temp}℃`;
+  } catch (e) {
+    document.getElementById("weather").innerText =
+      "날씨 정보를 불러올 수 없습니다";
+  }
+}
+
+loadWeather();
+setInterval(loadWeather, 600000);
+</script>
+
+</body>
+</html>
