@@ -2,29 +2,35 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>관리자 페이지</title>
+<title>DADAM ENC 관리자</title>
 <style>
-body{font-family:Pretendard,'Noto Sans KR',sans-serif;background:#f4f6f8;padding:30px}
-.section{background:#fff;border-radius:14px;padding:22px;margin-bottom:30px}
-input,select,button{padding:10px;margin:6px}
+*{font-family:Pretendard,'Noto Sans KR',sans-serif}
+body{background:#f4f6f8;padding:30px}
+.section{background:#fff;border-radius:14px;padding:22px;margin-bottom:28px}
+input,select,textarea,button{padding:10px;margin:6px;width:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .item{background:#eef1f4;border-radius:10px;padding:10px;margin-top:8px;display:flex;justify-content:space-between}
 .fixed-save{position:fixed;right:30px;bottom:30px;padding:16px 24px;font-size:16px}
 </style>
 </head>
 <body>
 
-<h1>사내 사이니지 관리자</h1>
+<h1>DADAM ENC 관리자 페이지</h1>
 
 <div class="section">
 <h2>출장 · 외근 · 연차</h2>
-<input id="personName" placeholder="이름">
-<input id="team" placeholder="부서">
+<div class="row">
+<input id="nameInput" placeholder="이름">
+<select id="department">
+<option>경영부</option><option>경영지원부</option><option>R&D연구소</option><option>기술영업부</option><option>공사지원부</option>
+</select>
 <select id="status">
 <option value="출장">출장</option>
 <option value="외근">외근</option>
 <option value="연차">연차</option>
 </select>
-<input id="desc" placeholder="내용">
+<input id="task" placeholder="업무 내용">
+</div>
 <button onclick="addTravel()">추가</button>
 <div id="travelTemp"></div>
 </div>
@@ -32,25 +38,30 @@ input,select,button{padding:10px;margin:6px}
 <div class="section">
 <h2>업무 일정</h2>
 <input type="date" id="date">
-<input id="title" placeholder="제목">
-<input id="sdesc" placeholder="설명">
+<input id="title" placeholder="일정 제목">
+<textarea id="detail" placeholder="상세 내용"></textarea>
 <button onclick="addSchedule()">추가</button>
 <div id="scheduleTemp"></div>
 </div>
 
-<button class="fixed-save" onclick="finalSave()">💾 최종 저장</button>
-<button onclick="location.href='index.html'">플레이어로 돌아가기</button>
+<div class="section">
+<h2>사내 공지사항</h2>
+<textarea id="noticeText" rows="4"></textarea>
+</div>
+
+<button class="fixed-save" onclick="saveAll()">💾 최종 저장</button>
+<button onclick="location.href='index.html'">사이니지로 돌아가기</button>
 
 <script>
-let travel=[], schedule=[];
-function colorMap(s){return s==="출장"?"green":s==="외근"?"yellow":"red";}
+let travel=[],schedule=[];
+function color(s){return s==="출장"?"green":s==="외근"?"yellow":"red";}
 
 function addTravel(){
   travel.push({
-    personName:document.getElementById("personName").value,
-    team:document.getElementById("team").value,
-    desc:document.getElementById("desc").value,
-    color:colorMap(document.getElementById("status").value)
+    name:document.getElementById("nameInput").value,
+    department:document.getElementById("department").value,
+    task:document.getElementById("task").value,
+    statusColor:color(document.getElementById("status").value)
   });
   render();
 }
@@ -59,31 +70,33 @@ function addSchedule(){
   schedule.push({
     date:document.getElementById("date").value,
     title:document.getElementById("title").value,
-    desc:document.getElementById("sdesc").value
+    detail:document.getElementById("detail").value
   });
   render();
 }
 
 function render(){
   travelTemp.innerHTML="";
-  travel.forEach((p,i)=>{
-    travelTemp.innerHTML+=`<div class="item">${p.personName} (${p.team}) - ${p.desc}<button onclick="travel.splice(${i},1);render()">삭제</button></div>`;
+  travel.forEach((t,i)=>{
+    travelTemp.innerHTML+=`<div class="item">${t.name} (${t.department}) - ${t.task}<button onclick="travel.splice(${i},1);render()">삭제</button></div>`;
   });
   scheduleTemp.innerHTML="";
   schedule.forEach((s,i)=>{
-    scheduleTemp.innerHTML+=`<div class="item">${s.date} ${s.title}<button onclick="schedule.splice(${i},1);render()">삭제</button></div>`;
+    scheduleTemp.innerHTML+=`<div class="item">${s.date} - ${s.title}<button onclick="schedule.splice(${i},1);render()">삭제</button></div>`;
   });
 }
 
-function finalSave(){
+function saveAll(){
   localStorage.setItem("travel",JSON.stringify(travel));
   localStorage.setItem("schedule",JSON.stringify(schedule));
-  alert("최종 저장 완료");
+  localStorage.setItem("notice",document.getElementById("noticeText").value);
+  alert("저장 완료");
 }
 
 (function load(){
   travel=JSON.parse(localStorage.getItem("travel")||"[]");
   schedule=JSON.parse(localStorage.getItem("schedule")||"[]");
+  noticeText.value=localStorage.getItem("notice")||"";
   render();
 })();
 </script>

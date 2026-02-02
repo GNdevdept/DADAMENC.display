@@ -2,57 +2,27 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>DADAM E&C 사이니지</title>
+<title>DADAM ENC 사이니지</title>
 <meta name="viewport" content="width=1920, height=1080">
 <style>
 *{box-sizing:border-box;font-family:Pretendard,'Noto Sans KR',sans-serif}
 html,body{margin:0;width:100%;height:100%;background:#0b1626;color:#fff}
 .wrapper{display:grid;grid-template-columns:3fr 2fr;height:100%;padding:48px;gap:40px}
-
-.brand{font-size:44px;font-weight:800}
+.brand{font-size:42px;font-weight:800}
 .time{font-size:96px;font-weight:700;margin-top:32px}
 .date{font-size:30px;opacity:.85}
-
-/* Weather */
-.weather-wrap{display:flex;align-items:center;margin-top:22px}
-.weather-frame{
-  position:relative;
-  width:60px;height:60px;border-radius:50%;
-  border:2px solid rgba(255,255,255,.35);
-  display:flex;align-items:center;justify-content:center;
-  margin-right:14px;
-  overflow:hidden;
-}
-.weather-frame::after{
-  content:"";
-  position:absolute;top:-50%;left:-50%;
-  width:200%;height:200%;
-  background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,.5) 50%,transparent 60%);
-  animation:shine 8s infinite linear;
-}
-.weather-frame img{width:36px;height:36px}
-.weather-text{font-size:24px}
-.location{font-size:16px;opacity:.7}
-
-@keyframes shine{
-  from{transform:translate(-100%,-100%) rotate(25deg)}
-  to{transform:translate(100%,100%) rotate(25deg)}
-}
-
-/* Panels */
-.panel{background:#13263f;border-radius:20px;padding:26px}
-.panel h2{margin:0 0 18px;font-size:28px;border-bottom:1px solid rgba(255,255,255,.15)}
-.status-item{display:flex;align-items:center;margin-bottom:14px;font-size:24px}
-
-/* Status dots */
+.weather{margin-top:20px;display:flex;align-items:center}
+.weather img{width:48px;height:48px;margin-right:12px}
+.notice{margin-top:24px;font-size:22px;line-height:1.4}
+.panel{background:#13263f;border-radius:18px;padding:26px}
+.panel h2{margin:0 0 16px;font-size:28px;border-bottom:1px solid rgba(255,255,255,.15)}
+.item{font-size:22px;margin-bottom:12px;display:flex;align-items:center}
 .dot{width:12px;height:12px;border-radius:50%;margin-right:10px}
 .green{background:#2ecc71}
 .yellow{background:#f1c40f}
 .red{background:#e74c3c}
-
-/* Admin modal */
 #adminModal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center}
-#adminBox{background:#13263f;padding:28px;border-radius:16px;width:340px;position:relative}
+#adminBox{background:#13263f;padding:28px;border-radius:14px;width:340px;position:relative}
 #adminBox input,#adminBox button{width:100%;padding:12px;margin-top:10px;font-size:16px}
 #closeAdmin{position:absolute;top:10px;right:14px;cursor:pointer}
 </style>
@@ -61,29 +31,24 @@ html,body{margin:0;width:100%;height:100%;background:#0b1626;color:#fff}
 
 <div class="wrapper">
   <div>
-    <div class="brand">DADAM E&C</div>
+    <div class="brand">DADAM ENC</div>
     <div class="time" id="time"></div>
     <div class="date" id="date"></div>
-
-    <div class="weather-wrap">
-      <div class="weather-frame">
-        <img id="weatherIcon">
-      </div>
-      <div>
-        <div class="weather-text" id="weatherText"></div>
-        <div class="location">보타닉게이트 지식산업센터</div>
-      </div>
+    <div class="weather">
+      <img id="weatherIcon">
+      <div id="weatherText"></div>
     </div>
+    <div class="notice" id="notice"></div>
   </div>
 
   <div>
     <div class="panel">
       <h2>출장 · 외근 현황</h2>
-      <div id="travelView"></div>
+      <div id="travelList"></div>
     </div>
     <div class="panel" style="margin-top:24px">
       <h2>업무 일정</h2>
-      <div id="scheduleView"></div>
+      <div id="scheduleList"></div>
     </div>
   </div>
 </div>
@@ -91,48 +56,49 @@ html,body{margin:0;width:100%;height:100%;background:#0b1626;color:#fff}
 <div id="adminModal">
   <div id="adminBox">
     <div id="closeAdmin" onclick="closeAdmin()">✕</div>
-    <h2>관리자 로그인</h2>
+    <h2>관리자 액세스</h2>
     <input type="password" id="adminPw" placeholder="비밀번호">
     <button onclick="login()">확인</button>
   </div>
 </div>
 
 <script>
-/* Time */
 function updateTime(){
   const n=new Date();
-  time.innerText=n.toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour12:false});
-  date.innerText=n.toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'});
+  time.innerText=n.toLocaleTimeString('ko-KR',{hour12:false});
+  date.innerText=n.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'});
 }
 setInterval(updateTime,1000);updateTime();
 
-/* Weather */
 async function loadWeather(){
   try{
     const r=await fetch("https://api.openweathermap.org/data/2.5/weather?lat=37.56015&lon=126.82695&units=metric&lang=kr&appid=a33a7b44981e0a4738c0a7a023bbc7b9");
     const d=await r.json();
-    weatherText.innerText=d.weather[0].description+" · "+Math.round(d.main.temp)+"℃";
+    weatherText.innerText=d.weather[0].description+" · "+Math.round(d.main.temp)+"℃ (마곡 보타닉게이트 지식산업센터)";
     weatherIcon.src="https://openweathermap.org/img/wn/"+d.weather[0].icon+"@2x.png";
-  }catch{weatherText.innerText="날씨 오류";}
+  }catch{weatherText.innerText="날씨 정보 없음";}
 }
 loadWeather();setInterval(loadWeather,600000);
 
-/* Render data */
 function render(){
   const travel=JSON.parse(localStorage.getItem("travel")||"[]");
   const schedule=JSON.parse(localStorage.getItem("schedule")||"[]");
-  travelView.innerHTML="";
-  scheduleView.innerHTML="";
-  travel.forEach(p=>{
-    travelView.innerHTML+=`<div class="status-item"><span class="dot ${p.color}"></span>${p.personName} (${p.team}) - ${p.desc}</div>`;
-  });
-  schedule.forEach(s=>{
-    scheduleView.innerHTML+=`<div>${s.date} · ${s.title} - ${s.desc}</div>`;
-  });
-}
-setInterval(render,1000);render();
+  const noticeData=localStorage.getItem("notice")||"";
 
-/* ADMIN trigger */
+  travelList.innerHTML="";
+  travel.forEach(p=>{
+    travelList.innerHTML+=`<div class="item"><span class="dot ${p.statusColor}"></span>${p.name} (${p.department}) - ${p.task}</div>`;
+  });
+
+  scheduleList.innerHTML="";
+  schedule.forEach(s=>{
+    scheduleList.innerHTML+=`<div class="item">${s.date} - ${s.title}</div>`;
+  });
+
+  notice.innerText=noticeData;
+}
+setInterval(render,500);render();
+
 let seq="",target="ADMIN";
 document.addEventListener("keydown",e=>{
   seq+=e.key.toUpperCase();
