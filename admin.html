@@ -7,91 +7,95 @@
 *{font-family:Pretendard,'Noto Sans KR',sans-serif}
 body{background:#f4f6f8;padding:30px}
 .section{background:#fff;border-radius:14px;padding:22px;margin-bottom:28px}
-input,select,textarea,button{padding:10px;margin:6px}
+input,select,textarea,button{padding:8px;margin:4px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .item{background:#eef1f4;border-radius:10px;padding:10px;margin-top:8px}
 .actions{position:fixed;bottom:30px;right:30px;display:flex;gap:12px}
+.dot{width:18px;height:18px;border-radius:50%;display:inline-block;margin-right:6px}
+.green{background:#2ecc71}
+.yellow{background:#f1c40f}
+.red{background:#e74c3c}
 </style>
 </head>
 <body>
-
 <h1>DADAM ENC 관리자 페이지</h1>
 
 <div class="section">
 <h2>출장 · 외근 · 연차</h2>
-<div class="row">
-<input id="nameInput" placeholder="이름">
-<select id="department">
+<input id="tName" placeholder="이름">
+<select id="tDept">
 <option>경영부</option><option>경영지원부</option><option>R&D연구소</option><option>기술영업부</option><option>공사지원부</option>
 </select>
-<select id="status">
-<option value="출장">출장</option>
-<option value="외근">외근</option>
-<option value="연차">연차</option>
+<select id="tStatus">
+<option value="출장">출장</option><option value="외근">외근</option><option value="연차">연차</option>
 </select>
-<input id="task" placeholder="업무 내용">
-</div>
+<input id="tTask" placeholder="업무 내용">
 <button onclick="addTravel()">추가</button>
-<div id="travelTemp"></div>
+<div id="travelEdit"></div>
 </div>
 
 <div class="section">
 <h2>업무 일정</h2>
-<input type="date" id="schDate">
-<input id="schTitle" placeholder="일정 제목">
+<input type="date" id="sDate">
+<input id="sTitle" placeholder="일정 제목">
+<textarea id="sDetail" placeholder="세부사항"></textarea>
 <button onclick="addSchedule()">추가</button>
-<div id="scheduleTemp"></div>
+<div id="scheduleEdit"></div>
 </div>
 
 <div class="section">
 <h2>사내 공지사항</h2>
-<textarea id="noticeText" rows="4"></textarea>
+<textarea id="noticeText"></textarea>
 </div>
 
 <div class="actions">
-  <button onclick="location.href='index.html'">사이니지로</button>
-  <button onclick="saveAll()">💾 저장</button>
+<button onclick="location.href='index.html'">사이니지로</button>
+<button onclick="saveAll()">💾 저장</button>
 </div>
 
 <script>
-let travel=[],schedule=[];
+let travel=JSON.parse(localStorage.getItem("travel")||"[]");
+let schedule=JSON.parse(localStorage.getItem("schedule")||"[]");
+
 function color(s){return s==="출장"?"green":s==="외근"?"yellow":"red";}
 
 function addTravel(){
-  travel.push({
-    name:nameInput.value,
-    department:department.value,
-    task:task.value,
-    color:color(status.value)
-  });
-  render();
+ travel.push({name:tName.value,department:tDept.value,task:tTask.value,color:color(tStatus.value)});
+ render();
 }
 function addSchedule(){
-  schedule.push({date:schDate.value,title:schTitle.value});
-  render();
+ schedule.push({date:sDate.value,title:sTitle.value,detail:sDetail.value});
+ render();
 }
 function render(){
-  travelTemp.innerHTML="";
-  scheduleTemp.innerHTML="";
-  travel.forEach((t)=>{
-    travelTemp.innerHTML+=`<div class="item">${t.name} (${t.department}) - ${t.task}</div>`;
-  });
-  schedule.forEach((s)=>{
-    scheduleTemp.innerHTML+=`<div class="item">${s.date} · ${s.title}</div>`;
-  });
+ travelEdit.innerHTML="";
+ scheduleEdit.innerHTML="";
+ travel.forEach((t,i)=>{
+  travelEdit.innerHTML+=`<div class="item">
+   <span class="dot ${t.color}"></span>
+   <input value="${t.name}" onchange="travel[${i}].name=this.value">
+   <input value="${t.department}" onchange="travel[${i}].department=this.value">
+   <input value="${t.task}" onchange="travel[${i}].task=this.value">
+   <button onclick="travel.splice(${i},1);render()">삭제</button>
+  </div>`;
+ });
+ schedule.forEach((s,i)=>{
+  scheduleEdit.innerHTML+=`<div class="item">
+   <input type="date" value="${s.date}" onchange="schedule[${i}].date=this.value">
+   <input value="${s.title}" onchange="schedule[${i}].title=this.value">
+   <textarea onchange="schedule[${i}].detail=this.value">${s.detail}</textarea>
+   <button onclick="schedule.splice(${i},1);render()">삭제</button>
+  </div>`;
+ });
 }
 function saveAll(){
-  localStorage.setItem("travel",JSON.stringify(travel));
-  localStorage.setItem("schedule",JSON.stringify(schedule));
-  localStorage.setItem("notice",noticeText.value);
-  alert("저장 완료");
+ localStorage.setItem("travel",JSON.stringify(travel));
+ localStorage.setItem("schedule",JSON.stringify(schedule));
+ localStorage.setItem("notice",noticeText.value);
+ alert("저장 완료");
 }
-(function load(){
-  travel=JSON.parse(localStorage.getItem("travel")||"[]");
-  schedule=JSON.parse(localStorage.getItem("schedule")||"[]");
-  noticeText.value=localStorage.getItem("notice")||"";
-  render();
-})();
+noticeText.value=localStorage.getItem("notice")||"";
+render();
 </script>
 </body>
 </html>
