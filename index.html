@@ -33,9 +33,16 @@ animation:shine 3.5s infinite linear}
 
 .name{font-size:1.5em;font-weight:800}
 .sub{opacity:.8;margin-left:39px}
+
+/* ADMIN MODAL */
+#adminModal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center;z-index:9999}
+#adminBox{background:#13263f;padding:28px;border-radius:14px;width:340px;position:relative}
+#adminBox input,#adminBox button{width:100%;padding:12px;margin-top:10px;font-size:16px}
+#closeAdmin{position:absolute;top:10px;right:14px;cursor:pointer}
 </style>
 </head>
 <body>
+
 <div class="wrapper">
 <div>
 <div class="brand">DADAM ENC</div>
@@ -80,6 +87,16 @@ animation:shine 3.5s infinite linear}
 </div>
 </div>
 
+<!-- ADMIN MODAL -->
+<div id="adminModal">
+ <div id="adminBox">
+  <div id="closeAdmin" onclick="closeAdmin()">✕</div>
+  <h2>관리자 액세스</h2>
+  <input type="password" id="adminPw" placeholder="비밀번호">
+  <button onclick="login()">확인</button>
+ </div>
+</div>
+
 <script>
 function updateTime(){
  const n=new Date();
@@ -119,6 +136,16 @@ function render(){
  });
 }
 setInterval(render,500);render();
+
+/* ADMIN ACCESS */
+let seq="",target="ADMIN";
+document.addEventListener("keydown",e=>{
+ seq+=e.key.toUpperCase();
+ if(!target.startsWith(seq)) seq="";
+ if(seq===target){adminModal.style.display="flex";seq="";}
+});
+function closeAdmin(){adminModal.style.display="none";adminPw.value="";}
+function login(){ if(adminPw.value==="2356") location.href="admin.html"; else alert("비밀번호 오류"); }
 </script>
 </body>
 </html>
