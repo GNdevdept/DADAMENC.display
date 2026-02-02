@@ -2,81 +2,59 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>사내 디지털 사이니지</title>
-<meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+<title>DADAM E&C 사이니지</title>
+<meta name="viewport" content="width=1920, height=1080">
 <style>
 *{box-sizing:border-box;font-family:Pretendard,'Noto Sans KR',sans-serif}
-html,body{margin:0;width:100%;height:100%;background:#0e1a2b;color:#fff}
-.wrapper{display:grid;grid-template-columns:3fr 2fr;height:100%;padding:40px;gap:32px}
+html,body{margin:0;width:100%;height:100%;background:#0b1626;color:#fff}
+.wrapper{display:grid;grid-template-columns:3fr 2fr;height:100%;padding:48px;gap:40px}
 
-.brand{font-size:48px;font-weight:800}
-.time{font-size:96px;font-weight:700;margin-top:40px}
-.date{font-size:32px;opacity:.85}
+.brand{font-size:44px;font-weight:800}
+.time{font-size:96px;font-weight:700;margin-top:32px}
+.date{font-size:30px;opacity:.85}
 
-/* Weather glass */
-.weather-box{display:flex;align-items:center;margin-top:18px}
-.weather-glass{
+/* Weather */
+.weather-wrap{display:flex;align-items:center;margin-top:22px}
+.weather-frame{
   position:relative;
-  width:64px;height:64px;border-radius:50%;
-  background:rgba(255,255,255,.15);
-  backdrop-filter:blur(6px);
+  width:60px;height:60px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.35);
   display:flex;align-items:center;justify-content:center;
   margin-right:14px;
-  box-shadow:inset 0 1px 2px rgba(255,255,255,.6),
-             inset 0 -1px 2px rgba(0,0,0,.25),
-             0 4px 10px rgba(0,0,0,.35);
   overflow:hidden;
 }
-.weather-glass::after{
+.weather-frame::after{
   content:"";
   position:absolute;top:-50%;left:-50%;
   width:200%;height:200%;
-  background:linear-gradient(120deg,
-    transparent 40%,
-    rgba(255,255,255,.45) 50%,
-    transparent 60%);
-  animation:shine 7s infinite linear;
+  background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,.5) 50%,transparent 60%);
+  animation:shine 8s infinite linear;
 }
-.weather-glass img{width:36px;height:36px}
+.weather-frame img{width:36px;height:36px}
+.weather-text{font-size:24px}
+.location{font-size:16px;opacity:.7}
 
 @keyframes shine{
   from{transform:translate(-100%,-100%) rotate(25deg)}
   to{transform:translate(100%,100%) rotate(25deg)}
 }
 
-.weather-text{font-size:26px}
-.location{font-size:18px;opacity:.7}
+/* Panels */
+.panel{background:#13263f;border-radius:20px;padding:26px}
+.panel h2{margin:0 0 18px;font-size:28px;border-bottom:1px solid rgba(255,255,255,.15)}
+.status-item{display:flex;align-items:center;margin-bottom:14px;font-size:24px}
 
-.panel{background:#162a45;border-radius:20px;padding:28px}
-.panel h2{margin:0 0 20px;font-size:32px;border-bottom:2px solid rgba(255,255,255,.15)}
-.status-item{display:flex;align-items:center;margin-bottom:16px;font-size:26px}
-
-.dot{width:14px;height:14px;border-radius:50%;margin-right:12px}
+/* Status dots */
+.dot{width:12px;height:12px;border-radius:50%;margin-right:10px}
 .green{background:#2ecc71}
 .yellow{background:#f1c40f}
 .red{background:#e74c3c}
 
 /* Admin modal */
-#adminModal{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.7);
-  display:none;
-  justify-content:center;align-items:center;
-}
-#adminBox{
-  background:#162a45;
-  padding:30px;
-  border-radius:18px;
-  width:360px;
-  position:relative;
-}
-#adminBox input,#adminBox button{
-  width:100%;padding:12px;margin-top:10px;font-size:16px;
-}
-#closeAdmin{
-  position:absolute;top:10px;right:14px;
-  cursor:pointer;font-size:18px;
-}
+#adminModal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center}
+#adminBox{background:#13263f;padding:28px;border-radius:16px;width:340px;position:relative}
+#adminBox input,#adminBox button{width:100%;padding:12px;margin-top:10px;font-size:16px}
+#closeAdmin{position:absolute;top:10px;right:14px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -87,12 +65,12 @@ html,body{margin:0;width:100%;height:100%;background:#0e1a2b;color:#fff}
     <div class="time" id="time"></div>
     <div class="date" id="date"></div>
 
-    <div class="weather-box">
-      <div class="weather-glass">
-        <img id="weatherIcon" />
+    <div class="weather-wrap">
+      <div class="weather-frame">
+        <img id="weatherIcon">
       </div>
       <div>
-        <div class="weather-text" id="weatherText">날씨 불러오는 중…</div>
+        <div class="weather-text" id="weatherText"></div>
         <div class="location">보타닉게이트 지식산업센터</div>
       </div>
     </div>
@@ -114,13 +92,13 @@ html,body{margin:0;width:100%;height:100%;background:#0e1a2b;color:#fff}
   <div id="adminBox">
     <div id="closeAdmin" onclick="closeAdmin()">✕</div>
     <h2>관리자 로그인</h2>
-    <input type="password" id="pw" placeholder="비밀번호">
+    <input type="password" id="adminPw" placeholder="비밀번호">
     <button onclick="login()">확인</button>
   </div>
 </div>
 
 <script>
-/* time */
+/* Time */
 function updateTime(){
   const n=new Date();
   time.innerText=n.toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour12:false});
@@ -128,47 +106,41 @@ function updateTime(){
 }
 setInterval(updateTime,1000);updateTime();
 
-/* weather */
+/* Weather */
 async function loadWeather(){
   try{
     const r=await fetch("https://api.openweathermap.org/data/2.5/weather?lat=37.56015&lon=126.82695&units=metric&lang=kr&appid=a33a7b44981e0a4738c0a7a023bbc7b9");
     const d=await r.json();
-    weatherText.innerText = d.weather[0].description + " · " + Math.round(d.main.temp) + "℃";
-    weatherIcon.src = "https://openweathermap.org/img/wn/" + d.weather[0].icon + "@2x.png";
-  }catch{
-    weatherText.innerText="날씨 오류";
-  }
+    weatherText.innerText=d.weather[0].description+" · "+Math.round(d.main.temp)+"℃";
+    weatherIcon.src="https://openweathermap.org/img/wn/"+d.weather[0].icon+"@2x.png";
+  }catch{weatherText.innerText="날씨 오류";}
 }
-loadWeather(); setInterval(loadWeather,600000);
+loadWeather();setInterval(loadWeather,600000);
 
-/* render */
+/* Render data */
 function render(){
   const travel=JSON.parse(localStorage.getItem("travel")||"[]");
   const schedule=JSON.parse(localStorage.getItem("schedule")||"[]");
   travelView.innerHTML="";
   scheduleView.innerHTML="";
   travel.forEach(p=>{
-    travelView.innerHTML+=`<div class="status-item"><span class="dot ${p.color}"></span>${p.name} (${p.team}) - ${p.desc}</div>`;
+    travelView.innerHTML+=`<div class="status-item"><span class="dot ${p.color}"></span>${p.personName} (${p.team}) - ${p.desc}</div>`;
   });
   schedule.forEach(s=>{
     scheduleView.innerHTML+=`<div>${s.date} · ${s.title} - ${s.desc}</div>`;
   });
 }
-setInterval(render,1000); render();
+setInterval(render,1000);render();
 
-/* ADMIN key trigger */
+/* ADMIN trigger */
 let seq="",target="ADMIN";
 document.addEventListener("keydown",e=>{
   seq+=e.key.toUpperCase();
   if(!target.startsWith(seq)) seq="";
-  if(seq===target){ adminModal.style.display="flex"; seq=""; }
+  if(seq===target){adminModal.style.display="flex";seq="";}
 });
-
-function closeAdmin(){ adminModal.style.display="none"; pw.value=""; }
-function login(){
-  if(pw.value==="5973") location.href="admin.html";
-  else alert("비밀번호 오류");
-}
+function closeAdmin(){adminModal.style.display="none";adminPw.value="";}
+function login(){ if(adminPw.value==="5973") location.href="admin.html"; else alert("비밀번호 오류"); }
 </script>
 </body>
 </html>
