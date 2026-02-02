@@ -11,6 +11,8 @@ html,body{margin:0;width:100%;height:100%;background:#0e1a2b;color:#fff}
 .brand{font-size:48px;font-weight:800}
 .time{font-size:96px;font-weight:700;margin-top:40px}
 .date{font-size:32px;opacity:.85}
+.weather{font-size:28px;margin-top:20px}
+.location{font-size:18px;opacity:.7}
 .panel{background:#162a45;border-radius:20px;padding:28px}
 .panel h2{margin:0 0 20px;font-size:32px;border-bottom:2px solid rgba(255,255,255,.15)}
 .status-item{display:flex;align-items:center;margin-bottom:16px;font-size:26px}
@@ -24,10 +26,11 @@ animation:shine 6s infinite linear}
 .red{background:radial-gradient(circle at 30% 30%, #ff9a9a, #c62828)}
 @keyframes shine{from{transform:translate(-100%,-100%) rotate(25deg)}to{transform:translate(100%,100%) rotate(25deg)}}
 
-/* admin modal */
+/* admin login modal */
 #adminModal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center}
-#adminBox{background:#162a45;padding:30px;border-radius:18px;width:360px}
-#adminBox input,button{width:100%;padding:12px;margin-top:10px;font-size:16px}
+#adminBox{background:#162a45;padding:30px;border-radius:18px;width:360px;position:relative}
+#adminBox input,#adminBox button{width:100%;padding:12px;margin-top:10px;font-size:16px}
+#closeAdmin{position:absolute;top:10px;right:14px;cursor:pointer;font-size:18px}
 </style>
 </head>
 <body>
@@ -37,6 +40,8 @@ animation:shine 6s infinite linear}
     <div class="brand">DADAM E&C</div>
     <div class="time" id="time"></div>
     <div class="date" id="date"></div>
+    <div class="weather" id="weather">날씨 불러오는 중...</div>
+    <div class="location">보타닉게이트 지식산업센터</div>
   </div>
   <div>
     <div class="panel">
@@ -52,6 +57,7 @@ animation:shine 6s infinite linear}
 
 <div id="adminModal">
   <div id="adminBox">
+    <div id="closeAdmin" onclick="closeAdmin()">✕</div>
     <h2>관리자 로그인</h2>
     <input type="password" id="pw" placeholder="비밀번호">
     <button onclick="login()">확인</button>
@@ -67,6 +73,16 @@ function updateTime(){
 }
 setInterval(updateTime,1000);updateTime();
 
+/* weather */
+async function loadWeather(){
+  try{
+    const r=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=37.56015&lon=126.82695&units=metric&lang=kr&appid=a33a7b44981e0a4738c0a7a023bbc7b9`);
+    const d=await r.json();
+    weather.innerText=`${d.weather[0].description} · ${Math.round(d.main.temp)}℃`;
+  }catch(e){weather.innerText="날씨 오류";}
+}
+loadWeather();setInterval(loadWeather,600000);
+
 /* render */
 function render(){
   const t=JSON.parse(localStorage.getItem('travel')||'[]');
@@ -78,19 +94,15 @@ function render(){
 }
 setInterval(render,1000);render();
 
-/* admin trigger: ADMIN */
+/* admin trigger */
 let seq="",target="ADMIN";
 document.addEventListener('keydown',e=>{
   seq+=e.key.toUpperCase();
   if(!target.startsWith(seq)) seq="";
-  if(seq===target){document.getElementById('adminModal').style.display='flex';seq="";}
+  if(seq===target){adminModal.style.display='flex';seq="";}
 });
-
-function login(){
-  if(pw.value==="5973"){
-    window.location.href="admin.html";
-  }else alert("비밀번호 오류");
-}
+function closeAdmin(){adminModal.style.display='none';pw.value="";}
+function login(){if(pw.value==="5973") location.href="admin.html"; else alert("비밀번호 오류");}
 </script>
 </body>
 </html>

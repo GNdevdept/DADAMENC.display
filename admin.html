@@ -2,16 +2,16 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>관리자 모드</title>
+<title>관리자 페이지</title>
 <style>
 body{font-family:Pretendard,'Noto Sans KR',sans-serif;background:#f4f6f8;padding:30px}
 input,select,button{padding:10px;margin:6px}
 </style>
 </head>
 <body>
-<h1>관리자 모드</h1>
+<h1>관리자 페이지</h1>
 
-<h2>출장 / 외근</h2>
+<h2>출장 / 외근 / 연차</h2>
 <input id="name" placeholder="이름">
 <input id="team" placeholder="부서">
 <select id="status">
@@ -27,20 +27,24 @@ input,select,button{padding:10px;margin:6px}
 <input id="sdesc" placeholder="설명">
 <button onclick="addSchedule()">저장</button>
 
+<br><br>
+<button onclick="goBack()">플레이어로 돌아가기</button>
+
 <script>
 function color(s){return s==="출장"?"green":s==="외근"?"yellow":"red"}
 function addTravel(){
   const t=JSON.parse(localStorage.getItem('travel')||'[]');
   t.push({name:name.value,team:team.value,status:status.value,color:color(status.value),desc:desc.value});
   localStorage.setItem('travel',JSON.stringify(t));
-  alert("저장됨");
+  alert("저장 완료");
 }
 function addSchedule(){
   const s=JSON.parse(localStorage.getItem('schedule')||'[]');
   s.push({title:title.value,desc:sdesc.value});
   localStorage.setItem('schedule',JSON.stringify(s));
-  alert("저장됨");
+  alert("저장 완료");
 }
+function goBack(){location.href="index.html";}
 </script>
 </body>
 </html>
