@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>DADAM ENC Signage</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  margin: 0;
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  background: radial-gradient(circle at top, #1b1f27, #0a0d12);
+  color: #fff;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+}
+header h1 {
+  font-size: 42px;
+  letter-spacing: 2px;
+}
+#clock {
+  font-size: 20px;
+  font-weight: 600;
+}
+.container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+  padding: 20px 40px 40px;
+}
+.box {
+  background: rgba(255,255,255,0.05);
+  border-radius: 18px;
+  padding: 20px;
+}
+.box h2 {
+  margin-top: 0;
+}
+.notice {
+  background: #1f3b5f;
+}
+.weather-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.weather-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  margin-right: 14px;
+  position: relative;
+  background: rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.weather-icon::before {
+  content: "";
+  position: absolute;
+  width: 140%;
+  height: 140%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent);
+  animation: spin 2.5s linear infinite;
+}
+.weather-icon img {
+  width: 36px;
+  z-index: 2;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.employee {
+  margin-bottom: 16px;
+}
+.employee .name {
+  font-size: 22px;
+  font-weight: bold;
+}
+.employee .desc {
+  opacity: 0.8;
+}
+.status {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+.status.trip { background: #2ecc71; }
+.status.out { background: #f1c40f; }
+.status.leave { background: #e74c3c; }
+footer {
+  position: fixed;
+  bottom: 12px;
+  width: 100%;
+  text-align: center;
+  opacity: 0.7;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>DADAM ENC</h1>
+  <div id="clock"></div>
+</header>
+
+<div class="container">
+  <div class="box">
+    <h2>날씨</h2>
+    <div id="weather"></div>
+  </div>
+
+  <div class="box">
+    <h2>출장 · 외근 · 연차 현황</h2>
+    <div id="employees"></div>
+  </div>
+
+  <div class="box">
+    <h2>업무 일정</h2>
+    <div id="schedule"></div>
+  </div>
+
+  <div class="box notice">
+    <h2>사내 공지사항</h2>
+    <div id="notice"></div>
+  </div>
+</div>
+
+<footer>스프레드시트 연동 · 자동 갱신</footer>
+
+<script>
+const WEATHER_KEY = "a33a7b44981e0a4738c0a7a023bbc7b9";
+const SHEET_ID = "1htZUGJ0ZpkwygX2bw5QpdhS3ZclTmMMT0fBWQj-Ip5g";
+const SHEET_URL = `https://opensheet.elk.sh/${SHEET_ID}/시트1`;
+
+const locations = [
+  { name: "다담이엔씨 본사", lat: 37.567, lon: 126.829, desc: "마곡 보타닉게이트 지식산업센터" },
+  { name: "다담이엔씨 공장", lat: 36.8646874, lon: 126.7022519, desc: "충청남도 당진시 순성면 731-19" },
+  { name: "오리온 R&D센터 현장", lat: 37.4869871, lon: 127.0462294, desc: "서울특별시 강남구 도곡동 177-6" }
+];
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById("clock").textContent =
+    now.toLocaleDateString("ko-KR", { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' }) +
+    " " +
+    now.toLocaleTimeString("ko-KR");
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+async function loadWeather() {
+  const wrap = document.getElementById("weather");
+  wrap.innerHTML = "";
+  for (const l of locations) {
+    const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${l.lat}&lon=${l.lon}&appid=${WEATHER_KEY}&units=metric&lang=kr`);
+    const d = await r.json();
+    wrap.innerHTML += `
+      <div class="weather-item">
+        <div class="weather-icon">
+          <img src="https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png">
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:bold">${l.name}</div>
+          <div style="font-size:13px;opacity:.7">${l.desc}</div>
+          <div>${d.weather[0].description}, ${Math.round(d.main.temp)}°C</div>
+        </div>
+      </div>`;
+  }
+}
+
+async function loadSheet() {
+  const r = await fetch(SHEET_URL);
+  const data = await r.json();
+
+  const emp = document.getElementById("employees");
+  const sch = document.getElementById("schedule");
+  const noti = document.getElementById("notice");
+
+  emp.innerHTML = "";
+  sch.innerHTML = "";
+  noti.innerHTML = "";
+
+  data.forEach(row => {
+    if (row["영업 구분"] === "EMPLOYEE") {
+      const cls = row["상태"] === "출장" ? "trip" : row["상태"] === "외근" ? "out" : "leave";
+      emp.innerHTML += `
+        <div class="employee">
+          <div class="name"><span class="status ${cls}"></span>${row["이름"]}</div>
+          <div class="desc">${row["부서"]} · ${row["내용"]}</div>
+        </div>`;
+    }
+    if (row["영업 구분"] === "SCHEDULE") {
+      sch.innerHTML += `<div><b>${row["날짜"]}</b><br>${row["제목"]}<br>${row["내용"]}</div><br>`;
+    }
+    if (row["영업 구분"] === "NOTICE") {
+      noti.innerHTML += `<div>● ${row["내용"]}</div>`;
+    }
+  });
+}
+
+loadWeather();
+loadSheet();
+setInterval(() => {
+  loadWeather();
+  loadSheet();
+}, 20000);
+</script>
+</body>
+</html>
