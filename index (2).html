@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>DADAM ENC Signage</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<style>
+:root{--bg:#0e1117;--panel:#161b22;--panel-blue:#1b3558;--text:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif}
+header{position:fixed;top:0;left:0;right:0;height:90px;background:#010409;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;z-index:100}
+#clock{position:absolute;right:40px;font-size:20px;font-weight:600}
+main{padding:120px 40px 120px;display:grid;grid-template-columns:2.2fr 1fr;gap:24px}
+.panel{background:var(--panel);border-radius:16px;padding:24px}
+.panel.blue{background:var(--panel-blue)}
+h2{margin:0 0 16px;font-size:22px;font-weight:700}
+.weather-grid{display:grid;gap:16px}
+.weather-card{display:flex;align-items:center;gap:16px}
+.weather-icon-wrap{width:70px;height:70px;border-radius:50%;padding:6px;position:relative}
+.weather-icon-wrap::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:linear-gradient(120deg,rgba(255,255,255,.1),rgba(255,255,255,.4),rgba(255,255,255,.1));animation:shine 3s linear infinite}
+@keyframes shine{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.weather-icon{width:100%;height:100%;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center}
+.weather-text b{font-size:20px}
+.weather-text small{opacity:.8}
+.employee{display:grid;grid-template-columns:40px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid #222}
+.status-dot{width:26px;height:26px;border-radius:50%;position:relative}
+.status-dot::after{content:'';position:absolute;inset:-6px;border-radius:50%;background:linear-gradient(120deg,rgba(255,255,255,.2),rgba(255,255,255,.5),rgba(255,255,255,.2));animation:shine 2.5s linear infinite}
+.dot-trip{background:#2ea043}.dot-out{background:#d29922}.dot-leave{background:#f85149}
+.emp-name{font-size:22px;font-weight:700}.emp-desc{opacity:.85}
+.schedule{padding:12px 0;border-bottom:1px solid #222}
+#notice{font-size:18px;line-height:1.6}
+footer{position:fixed;bottom:0;left:0;right:0;height:80px;background:#010409;display:flex;align-items:center;overflow:hidden}
+.marquee{white-space:nowrap;padding-left:100%;animation:marquee 20s linear infinite;font-size:20px}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+</style>
+</head>
+<body>
+<header>DADAM ENC<div id="clock"></div></header>
+<main>
+<div class="panel"><h2>날씨</h2><div class="weather-grid" id="weather"></div></div>
+<div class="panel"><h2>출장 · 외근 · 연차 현황</h2><div id="employees"></div></div>
+<div class="panel"><h2>업무 일정</h2><div id="schedules"></div></div>
+<div class="panel blue"><h2>사내 공지사항</h2><div id="noticeBox"></div></div>
+</main>
+<footer><div id="notice" class="marquee"></div></footer>
+<script>
+setInterval(()=>{const d=new Date();clock.innerText=d.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'})+' '+d.toLocaleTimeString('ko-KR',{hour12:false});},1000);
+const API_KEY="a33a7b44981e0a4738c0a7a023bbc7b9";
+const places=[
+{name:"다담이엔씨 본사",addr:"마곡 보타닉게이트 지식산업센터",lat:37.5593,lon:126.8256},
+{name:"다담이엔씨 공장",addr:"충청남도 당진시 순성면 731-19",lat:36.8646874,lon:126.7022519},
+{name:"오리온 R&D센터 현장",addr:"서울특별시 강남구 도곡동 177-6",lat:37.4869871,lon:127.0462294}
+];
+async function loadWeather(){
+ weather.innerHTML='';
+ for(const p of places){
+  const r=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${p.lat}&lon=${p.lon}&appid=${API_KEY}&units=metric&lang=kr`);
+  const d=await r.json();
+  weather.innerHTML+=`<div class="weather-card">
+   <div class="weather-icon-wrap"><div class="weather-icon">
+   <img src="https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png"></div></div>
+   <div class="weather-text"><b>${p.name}</b><br><small>${p.addr}</small><br>
+   ${d.weather[0].description}, ${Math.round(d.main.temp)}°C</div></div>`;
+ }
+}
+loadWeather();setInterval(loadWeather,1800000);
+const SHEET_ID="1htZUGJ0ZpkwygX2bw5QpdhS3ZclTmMMT0fBWQj-Ip5g";
+const SHEET_NAME="DADAMENC_SignageDATA";
+google.charts.load("current",{packages:["corechart"]});
+google.charts.setOnLoadCallback(loadSheet);
+function loadSheet(){
+ const q=new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}`);
+ q.send(res=>{
+  if(res.isError())return;
+  const d=res.getDataTable();
+  employees.innerHTML='';schedules.innerHTML='';notice.innerText='';noticeBox.innerHTML='';
+  for(let i=0;i<d.getNumberOfRows();i++){
+   const t=d.getValue(i,0);
+   if(t==="EMPLOYEE"){
+    const s=d.getValue(i,3);
+    const cls=s==="출장"?"dot-trip":s==="외근"?"dot-out":"dot-leave";
+    employees.innerHTML+=`<div class="employee">
+     <div class="status-dot ${cls}"></div>
+     <div><div class="emp-name">${d.getValue(i,1)}</div>
+     <div class="emp-desc">${d.getValue(i,2)} · ${d.getValue(i,6)||''}</div></div></div>`;
+   }
+   if(t==="SCHEDULE"){
+    schedules.innerHTML+=`<div class="schedule"><b>${d.getValue(i,4)}</b><br>${d.getValue(i,5)}<br><small>${d.getValue(i,6)||''}</small></div>`;
+   }
+   if(t==="NOTICE"){
+    notice.innerText=d.getValue(i,6);
+    noticeBox.innerHTML=d.getValue(i,6).replace(/●/g,'<br>●');
+   }
+  }
+ });
+}
+setInterval(loadSheet,15000);
+</script>
+</body>
+</html>
